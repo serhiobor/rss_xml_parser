@@ -1,4 +1,6 @@
 from typing import List, Optional
+from collections import OrderedDict
+import re
 
 
 def rss_parser(
@@ -27,4 +29,24 @@ def rss_parser(
         Feed: Some RSS Channel
         Link: https://some.rss.com
     """
-    pass
+    def get_feed_info(xml_string):
+        feed_elem_ord = ['title',
+                         'link',
+                         'lastBuildDate',
+                         'pubDate',
+                         'language',
+                         'category',
+                         'managinEditor',
+                         'description',
+                         'item']
+        feed_regex = "<channel>(.*?)<item>"
+        feed_string = re.findall(feed_regex, xml_string, flags=re.DOTALL)[0]
+        feed_tags_dict = OrderedDict()
+        for tag in feed_elem_ord:
+            tag_regex = f"<({tag})>(?P<{tag}>.*)</({tag})>"
+            value = re.search(tag_regex, feed_string)
+            if value:
+                feed_tags_dict[tag] = value.group(tag)
+        return feed_tags_dict
+
+    return get_feed_info(xml)
