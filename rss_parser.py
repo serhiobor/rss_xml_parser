@@ -1,6 +1,28 @@
 from typing import List, Optional
 from collections import OrderedDict
 import re
+import pprint
+
+test = '''<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+
+<channel>
+  <title>Feed title</title>
+  <link>https://www.w3schools.com</link>
+  <description>Free web building & tutorials</description>
+  <item>
+    <title>RSS Tutorial</title>
+    <link>https://www.w3schools.com/xml/xml_rss.asp</link>
+    <description>New RSS tutorial on W3Schools</description>
+  </item>
+  <item>
+    <title>XML Tutorial</title>
+    <link>https://www.w3schools.com/xml</link>
+    <description>New XML tutorial on W3Schools</description>
+  </item>
+</channel>
+
+</rss>'''
 
 
 def rss_parser(
@@ -34,6 +56,15 @@ def rss_parser(
     feed_string = re.findall(feed_regex, xml, flags=re.DOTALL)[0]
     items_string = re.split("(</*channel>)", xml)[2]
 
+    def tags_to_dict(xml_string: str, tags_order):
+        tags_dict = OrderedDict()
+        for tag in tags_order:
+            tag_regex = f"<({tag})>(?P<{tag}>.*)</({tag})>"
+            value = re.search(tag_regex, xml_string)
+            if value:
+                tags_dict[tag] = value.group(tag)
+        return tags_dict
+
     def get_feed_info():
         feed_elem_order = ['title',
                            'link',
@@ -44,15 +75,9 @@ def rss_parser(
                            'managinEditor',
                            'description',
                            'item']
-        feed_tags_dict = OrderedDict()
-        for tag in feed_elem_order:
-            tag_regex = f"<({tag})>(?P<{tag}>.*)</({tag})>"
-            value = re.search(tag_regex, feed_string)
-            if value:
-                feed_tags_dict[tag] = value.group(tag)
-        return feed_tags_dict
+        return tags_to_dict(feed_string, feed_elem_order)
 
-    def items_to_dict():
+    def get_items():
         item_elem_order = ['title',
                            'author',
                            'pubDate',
@@ -62,11 +87,10 @@ def rss_parser(
         items_list = items_string.split('<item>')[1:]
         list_of_items_dict = []
         for item in items_list:
-            item_tags_dict = OrderedDict()
-            for tag in item_elem_order:
-                tag_regex = f"<({tag})>(?P<{tag}>.*)</({tag})>"
-                value = re.search(tag_regex, item)
-                if value:
-                    item_tags_dict[tag] = value.group(tag)
-            list_of_items_dict.append(item_tags_dict)
+            list_of_items_dict.append(tags_to_dict(item, item_elem_order))
         return list_of_items_dict
+
+    return get_feed_info()
+
+
+pprint.pprint(rss_parser(test))
