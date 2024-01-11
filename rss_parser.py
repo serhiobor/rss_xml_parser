@@ -5,7 +5,7 @@ import json as jsn
 import requests
 import pprint
 
-yahoo_test = requests.get('https://news.yahoo.com/rss/').text
+# yahoo_test = requests.get('https://news.yahoo.com/rss/').text
 test = '''<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
 
@@ -59,12 +59,10 @@ def rss_parser(
 
     feed_regex = "<channel>(.*?)<item>"
     feed_string = re.findall(feed_regex, xml, flags=re.DOTALL)[0]
-    return feed_string
     items_string = re.split("(</*channel>)", xml)[2]
 
     feed_elem_order = {
         'title': 'Feed: ',
-        # TODO: it needs to show only LINK! Test it with yahoo
         'link': 'Link: ',
         'lastBuildDate': 'Last Build Date: ',
         'pubDate': 'Publish Date: ',
@@ -89,7 +87,7 @@ def rss_parser(
     def tags_to_dict(xml_string: str, tags_order):
         tags_dict = OrderedDict()
         for tag in tags_order:
-            tag_regex = f"<({tag})>(?P<{tag}>.*)</({tag})>"
+            tag_regex = f"<({tag})>(?P<{tag}>.*?)</({tag})>"
             value = re.search(tag_regex, xml_string)
             if value:
                 tags_dict[tag] = value.group(tag)
@@ -133,4 +131,4 @@ def rss_parser(
         return string_to_output
 
 
-print(rss_parser(yahoo_test, json=True))
+print(rss_parser(test, json=True))
