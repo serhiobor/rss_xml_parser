@@ -1,8 +1,11 @@
 from typing import List, Optional
 from collections import OrderedDict
 import re
+import json as jsn
+import requests
 import pprint
 
+yahoo_test = requests.get('https://news.yahoo.com/rss/').text
 test = '''<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
 
@@ -90,7 +93,10 @@ def rss_parser(
             list_of_items_dict.append(tags_to_dict(item, item_elem_order))
         return list_of_items_dict
 
-    return get_feed_info()
+    if json:
+        dict_to_output = get_feed_info()
+        dict_to_output['items'] = get_items()
+        return jsn.dumps(dict_to_output, indent=3)
 
 
-pprint.pprint(rss_parser(test))
+print(rss_parser(yahoo_test, json=True))
