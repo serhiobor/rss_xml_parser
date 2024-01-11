@@ -12,11 +12,13 @@ test = '''<?xml version="1.0" encoding="UTF-8" ?>
 <channel>
   <title>Feed title</title>
   <link>https://www.w3schools.com</link>
+  <category>IT/Internet/Web development</category>
   <description>Free web building & tutorials</description>
   <item>
     <title>RSS Tutorial</title>
     <link>https://www.w3schools.com/xml/xml_rss.asp</link>
     <description>New RSS tutorial on W3Schools</description>
+    <category>IT/Internet/Web development</category>
   </item>
   <item>
     <title>XML Tutorial</title>
@@ -57,7 +59,32 @@ def rss_parser(
 
     feed_regex = "<channel>(.*?)<item>"
     feed_string = re.findall(feed_regex, xml, flags=re.DOTALL)[0]
+    return feed_string
     items_string = re.split("(</*channel>)", xml)[2]
+
+    feed_elem_order = {
+        'title': 'Feed: ',
+        # TODO: it needs to show only LINK! Test it with yahoo
+        'link': 'Link: ',
+        'lastBuildDate': 'Last Build Date: ',
+        'pubDate': 'Publish Date: ',
+        'language': 'Language: ',
+        # TODO: check formating of categories
+        'category': 'Categories: ',
+        'managinEditor': 'Editor: ',
+        'description': 'Description: ',
+        'item': 'Items:'
+    }
+
+    item_elem_order = {
+        'title': 'Title: ',
+        'author': 'Author: ',
+        'pubDate': 'Published: ',
+        'link': 'Link: ',
+        # TODO: check formating
+        'category': 'Categories: ',
+        'description': '\n'
+    }
 
     def tags_to_dict(xml_string: str, tags_order):
         tags_dict = OrderedDict()
@@ -69,34 +96,41 @@ def rss_parser(
         return tags_dict
 
     def get_feed_info():
-        feed_elem_order = ['title',
-                           'link',
-                           'lastBuildDate',
-                           'pubDate',
-                           'language',
-                           'category',
-                           'managinEditor',
-                           'description',
-                           'item']
-        return tags_to_dict(feed_string, feed_elem_order)
+        return tags_to_dict(feed_string, feed_elem_order.keys())
 
     def get_items():
-        item_elem_order = ['title',
-                           'author',
-                           'pubDate',
-                           'link',
-                           'category',
-                           'description']
         items_list = items_string.split('<item>')[1:]
         list_of_items_dict = []
         for item in items_list:
-            list_of_items_dict.append(tags_to_dict(item, item_elem_order))
+            list_of_items_dict.append(
+                tags_to_dict(item, item_elem_order.keys()))
         return list_of_items_dict
 
     if json:
         dict_to_output = get_feed_info()
         dict_to_output['items'] = get_items()
         return jsn.dumps(dict_to_output, indent=3)
+
+    else:
+        feed_info = get_feed_info()
+        items = get_items()
+        string_to_output = ''
+        for tag in feed_info:
+            tag_name = feed_elem_order.get(tag)
+            tag_value = feed_info.get(tag)
+            string = f'{tag_name}{tag_value}\n'
+            string_to_output += string
+        string_to_output += '\n'
+
+        for item in items:
+            for tag in item:
+                tag_name = item_elem_order.get(tag)
+                tag_value = item.get(tag)
+                string = f'{tag_name}{tag_value}\n'
+                string_to_output += string
+            string_to_output += '\n'
+
+        return string_to_output
 
 
 print(rss_parser(yahoo_test, json=True))
