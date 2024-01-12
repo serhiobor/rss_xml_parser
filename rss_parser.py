@@ -1,9 +1,9 @@
+from ast import Dict
 from typing import List, Optional
 from collections import OrderedDict
 import re
 import json as jsn
 import requests
-import pprint
 
 # yahoo_test = requests.get('https://news.yahoo.com/rss/').text
 test = '''<?xml version="1.0" encoding="UTF-8" ?>
@@ -90,8 +90,24 @@ def rss_parser(
             tag_regex = f"<({tag})>(?P<{tag}>.*?)</({tag})>"
             value = re.search(tag_regex, xml_string)
             if value:
-                tags_dict[tag] = value.group(tag)
+                if tag == 'category':
+                    value = value.group(tag).split('/')
+                    tags_dict[tag] = value
+                else:
+                    tags_dict[tag] = value.group(tag)
         return tags_dict
+
+    def get_output_string(dict_with_info: OrderedDict, order_of_tags: dict):
+        string_to_output = ''
+        for tag in dict_with_info:
+            tag_name = order_of_tags.get(tag)
+            tag_value = dict_with_info.get(tag)
+            if isinstance(tag_value, list):
+                tag_value = ', '.join(tag_value)
+            string = f'{tag_name}{tag_value}\n'
+            string_to_output += string
+        string_to_output += '\n'
+        return string_to_output
 
     def get_feed_info():
         return tags_to_dict(feed_string, feed_elem_order.keys())
@@ -110,25 +126,18 @@ def rss_parser(
         return jsn.dumps(dict_to_output, indent=3)
 
     else:
-        feed_info = get_feed_info()
-        items = get_items()
         string_to_output = ''
-        for tag in feed_info:
-            tag_name = feed_elem_order.get(tag)
-            tag_value = feed_info.get(tag)
-            string = f'{tag_name}{tag_value}\n'
-            string_to_output += string
-        string_to_output += '\n'
 
+        feed_info = get_feed_info()
+        feed_string = get_output_string(feed_info, feed_elem_order)
+        string_to_output += feed_string
+
+        items = get_items()
         for item in items:
-            for tag in item:
-                tag_name = item_elem_order.get(tag)
-                tag_value = item.get(tag)
-                string = f'{tag_name}{tag_value}\n'
-                string_to_output += string
-            string_to_output += '\n'
+            item_string = get_output_string(item, item_elem_order)
+            string_to_output += item_string
 
         return string_to_output
 
 
-print(rss_parser(test, json=True))
+print(rss_parser(test))
