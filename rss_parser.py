@@ -1,33 +1,8 @@
-from ast import Dict
 from typing import List, Optional
 from collections import OrderedDict
 import re
 import json as jsn
-import requests
-
-# yahoo_test = requests.get('https://news.yahoo.com/rss/').text
-test = '''<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0">
-
-<channel>
-  <title>Feed title</title>
-  <link>https://www.w3schools.com</link>
-  <category>IT/Internet/Web development</category>
-  <description>Free web building & tutorials</description>
-  <item>
-    <title>RSS Tutorial</title>
-    <link>https://www.w3schools.com/xml/xml_rss.asp</link>
-    <description>New RSS tutorial on W3Schools</description>
-    <category>IT/Internet/Web development</category>
-  </item>
-  <item>
-    <title>XML Tutorial</title>
-    <link>https://www.w3schools.com/xml</link>
-    <description>New XML tutorial on W3Schools</description>
-  </item>
-</channel>
-
-</rss>'''
+import html
 
 
 def rss_parser(
@@ -57,6 +32,7 @@ def rss_parser(
         Link: https://some.rss.com
     """
 
+    xml = html.unescape(xml)
     feed_regex = "<channel>(.*?)<item>"
     feed_string = re.findall(feed_regex, xml, flags=re.DOTALL)[0]
     items_string = re.split("(</*channel>)", xml)[2]
@@ -114,6 +90,8 @@ def rss_parser(
 
     def get_items():
         items_list = items_string.split('<item>')[1:]
+        if limit:
+            items_list = items_list[:limit]
         list_of_items_dict = []
         for item in items_list:
             list_of_items_dict.append(
@@ -123,7 +101,7 @@ def rss_parser(
     if json:
         dict_to_output = get_feed_info()
         dict_to_output['items'] = get_items()
-        return jsn.dumps(dict_to_output, indent=3)
+        return jsn.dumps(dict_to_output, indent=2)
 
     else:
         string_to_output = ''
@@ -138,6 +116,3 @@ def rss_parser(
             string_to_output += item_string
 
         return string_to_output
-
-
-print(rss_parser(test))
