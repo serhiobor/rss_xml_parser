@@ -20,11 +20,11 @@ def rss_parser(
         json: If True, format output as JSON.
 
     Returns:
-        List of strings.
-        Which then can be printed to stdout or written to file as a separate lines.
+        Strings or JSON to console output.
     """
 
-    def tags_to_dict(xml_string: str, tags_order):
+    def tags_to_dict(xml_string: str, tags_order: dict):
+        """Make an OrderDict from xml-string where tags==keys."""
         tags_dict = OrderedDict()
         for tag in tags_order:
             tag_regex = f"<({tag})>(?P<{tag}>.*?)</({tag})>"
@@ -38,6 +38,7 @@ def rss_parser(
         return tags_dict
 
     def get_output_string(dict_with_info: OrderedDict, order_of_tags: dict):
+        """Generates string output from dicts with info"""
         string_to_output = ''
         for tag in dict_with_info:
             tag_name = order_of_tags.get(tag)
@@ -105,13 +106,14 @@ def rss_parser(
         string_to_output += '\n'
         items = get_items()
         for item in items:
-            item_string = get_output_string(item, item_elem_order)
+            item_string = '\n' + get_output_string(item, item_elem_order)
             string_to_output += item_string
-            string_to_output += '\n'
+            string_to_output += '\n*****\n'
     return string_to_output[:-2]
 
 
 def main():
+    """Main func with cli parser."""
     parser = argparse.ArgumentParser(
         prog="rss_parser",
         description="Pure Python command-line RSS reader."
