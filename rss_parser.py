@@ -1,12 +1,26 @@
 from typing import List, Optional
 from collections import OrderedDict
+from urllib.parse import urlparse
 import argparse
 import re
+import requests
 import json as jsn
 import html
 
 
-def rss_parser(
+def detect_url(string: str) -> bool:
+    """Returns True if present string is url-adress"""
+    parsed = urlparse(string)
+    if parsed.scheme and parsed.netloc:
+        return True
+
+
+def get_xml_from_url(url: str) -> str:
+    xml = requests.get(url).text
+    return xml
+
+
+def rss_reader(
     xml: str,
     limit: Optional[int] = None,
     json: bool = False,
@@ -121,7 +135,7 @@ def main():
     parser.add_argument(
         'xml',
         type=str,
-        help='file with xml string with rss info'
+        help='file with xml string or URL with RSS_xml'
     )
     parser.add_argument(
         '-j', '--json',
@@ -134,10 +148,14 @@ def main():
         help="Limit news topics if this parameter provided",
     )
     args = parser.parse_args()
-    with open(file=args.xml, encoding='utf-8', mode='r') as file:
-        xml = file.read()
+    xml_text = None
+    if detect_url(args.xml):
+        xml_text = get_xml_from_url(args.xml)
+    else:
+        with open(file=args.xml, encoding='utf-8', mode='r') as file:
+            xml_text = file.read()
     try:
-        print(rss_parser(xml, json=args.json, limit=args.limit))
+        print(rss_reader(xml_text, json=args.json, limit=args.limit))
     except Exception as e:
         raise e
 
