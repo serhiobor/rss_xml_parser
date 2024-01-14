@@ -1,5 +1,6 @@
 from typing import List, Optional
 from collections import OrderedDict
+import argparse
 import re
 import json as jsn
 import html
@@ -108,3 +109,36 @@ def rss_parser(
             string_to_output += item_string
             string_to_output += '\n'
     return string_to_output[:-2]
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="rss_parser",
+        description="Pure Python command-line RSS reader."
+    )
+    parser.add_argument(
+        'xml',
+        type=str,
+        help='file with xml string with rss info'
+    )
+    parser.add_argument(
+        '-j', '--json',
+        help="Print result as JSON in stdout",
+        action='store_true'
+    )
+    parser.add_argument(
+        '-l', '--limit',
+        type=int,
+        help="Limit news topics if this parameter provided",
+    )
+    args = parser.parse_args()
+    with open(file=args.xml, encoding='utf-8', mode='r') as file:
+        xml = file.read()
+    try:
+        print(rss_parser(xml, json=args.json, limit=args.limit))
+    except Exception as e:
+        raise e
+
+
+if __name__ == '__main__':
+    main()
